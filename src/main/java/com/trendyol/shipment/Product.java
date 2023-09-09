@@ -4,10 +4,12 @@ public class Product {
 
     private ShipmentSize size;
 
+    public Product(ShipmentSize shipmentSize){
+        setSize(shipmentSize);
+    }
+
     public static Product create(ShipmentSize shipmentSize) {
-        Product productVO = new Product();
-        productVO.setSize(shipmentSize);
-        return productVO;
+        return new Product(shipmentSize);
     }
 
     public ShipmentSize getSize() {
