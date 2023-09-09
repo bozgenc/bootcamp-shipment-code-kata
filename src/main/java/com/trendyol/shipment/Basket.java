@@ -5,72 +5,49 @@ import java.util.*;
 public class Basket {
 
     private List<Product> products;
+    private static final Integer THRESHOLD = 3;
 
     public void setProducts(List<Product> products) {
         this.products = products;
     }
 
     public ShipmentSize getShipmentSize() {
-        if(products.size() >= 3) {
+        if(products.isEmpty())
+            return null;
+
+        if(products.size() >= THRESHOLD) {
             Map.Entry<ShipmentSize, Integer> shipment = findMostOccurredShipment();
             Integer occurrenceNumber = shipment.getValue();
             ShipmentSize size = shipment.getKey();
 
-            if(occurrenceNumber >= 3)
-                return nextBiggerSizeOf(size);
+            if(occurrenceNumber >= THRESHOLD)
+                return size.getNextBigSize();
             else
                 return biggestOneInBasket();
         }
-        else return biggestOneInBasket();
-    }
-
-    private ShipmentSize nextBiggerSizeOf(ShipmentSize size) {
-        switch (size) {
-            case SMALL:
-                return ShipmentSize.MEDIUM;
-            case MEDIUM:
-                return ShipmentSize.LARGE;
-            case LARGE:
-            case X_LARGE:
-                return ShipmentSize.X_LARGE;
-            default:
-                return null;
-        }
+        else
+            return biggestOneInBasket();
     }
 
     private ShipmentSize biggestOneInBasket() {
-        List<ShipmentSize> sizes = new ArrayList<>(products.size());
-        for (int i = 0; i < products.size(); i++) {
-            sizes.add(products.get(i).getSize());
+        ShipmentSize biggest = ShipmentSize.SMALL;
+        for(Product product: products) {
+            ShipmentSize size = product.getSize();
+            if(size.ordinal() > biggest.ordinal())
+                biggest = size;
         }
-
-        return sizes.contains(ShipmentSize.X_LARGE) ? ShipmentSize.X_LARGE :
-                sizes.contains(ShipmentSize.LARGE) ? ShipmentSize.LARGE :
-                        sizes.contains(ShipmentSize.MEDIUM) ? ShipmentSize.MEDIUM :
-                                sizes.contains(ShipmentSize.SMALL) ? ShipmentSize.SMALL : null;
-
+        return biggest;
     }
 
     private Map.Entry<ShipmentSize, Integer> findMostOccurredShipment() {
         Map<ShipmentSize, Integer> shipmentSizeNumbers = new HashMap<>();
-        shipmentSizeNumbers.put(ShipmentSize.SMALL, 0);
-        shipmentSizeNumbers.put(ShipmentSize.MEDIUM, 0);
-        shipmentSizeNumbers.put(ShipmentSize.LARGE, 0);
-        shipmentSizeNumbers.put(ShipmentSize.X_LARGE, 0);
 
         for(Product product: products) {
+            shipmentSizeNumbers.putIfAbsent(product.getSize(), 0);
             Integer currentNumberOfSize = shipmentSizeNumbers.get(product.getSize());
             shipmentSizeNumbers.replace(product.getSize(), ++currentNumberOfSize);
         }
 
-        int maxNum = -1;
-        Map.Entry<ShipmentSize, Integer> mostOccurred = null;
-        for(Map.Entry<ShipmentSize, Integer> entry: shipmentSizeNumbers.entrySet()) {
-            if(entry.getValue() > maxNum) {
-                maxNum = entry.getValue();
-                mostOccurred = entry;
-            }
-        }
-        return mostOccurred;
+        return shipmentSizeNumbers.entrySet().stream().max((entry1, entry2) -> entry1.getValue() > entry2.getValue() ? 1 : -1).get();
     }
 }
